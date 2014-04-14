@@ -1,0 +1,161 @@
+#include <Servo.h>                                  //includes the servo library
+
+int motorPin1 = 3;   // int motor_a_pin_1=4;
+int motorPin2 = 4;   // int motor_a_pin_2=5;
+int motorPin3 = 5;  //int motor_b_pin_1=6;
+int motorPin4 = 6;  //int motor_b_pin_2=7;
+int servoPin = 9;
+
+const int pingPin = 8;
+const int dist = 0;
+
+int leftdist = 0;
+int rightdist = 0;
+int object = 10;             //distance at which the robot should look for another route                           
+
+Servo myservo;
+
+void setup ()
+{
+  Serial.begin(9600);   // initialize the data rate in bits per second
+  myservo.attach(9);
+  pinMode(motorPin1,OUTPUT);
+  pinMode(motorPin2,OUTPUT);
+  pinMode(motorPin3,OUTPUT);
+  pinMode(motorPin4,OUTPUT);
+  myservo.attach(servoPin);  //int servoPin = 9;
+  myservo.write(90);
+  delay(700);
+}
+void loop()
+{
+   
+
+ calc_distance();
+   
+  if(dist < object) {                         //if distance is less than 5
+   forward();                                  //then move forward
+  }
+  if(dist >= object) {               //if distance is greater than or equal to 5
+    findroute();
+  }
+}
+ 
+void forward() {                         
+   digitalWrite(motorPin1,HIGH );
+   digitalWrite(motorPin2,LOW);
+   digitalWrite(motorPin3,HIGH);
+   digitalWrite(motorPin4,LOW);
+   return;
+ }
+ 
+void findroute() {
+  halt();                                             // stop
+  reverse();                                       //go backwards
+  lookleft();                                      //go to subroutine lookleft
+  lookright();                                   //go to subroutine lookright
+                                      
+  if ( leftdist < rightdist )
+  {
+    turnleft();
+  }
+ else
+ {
+   turnright ();
+ }
+}
+
+void backward() {
+  digitalWrite(motorPin1,LOW);
+  digitalWrite(motorPin2,HIGH);
+  digitalWrite(motorPin3,LOW);
+  digitalWrite(motorPin4,HIGH);
+  delay(500);
+  halt();
+  return;
+}
+
+void halt () {
+  digitalWrite(motorPin1,LOW);
+  digitalWrite(motorPin2,LOW);
+  digitalWrite(motorPin3,LOW);
+  digitalWrite(motorPin4,LOW);
+  delay(500);                          //wait after stopping
+  return;
+}
+ 
+void lookleft() {
+  myservo.write(150);
+  delay(700);                                //wait for the servo to get there
+  leftdist = digitalRead(pingPin);
+  myservo.write(90);
+  delay(700);                                 //wait for the servo to get there
+  return;
+}
+
+void lookright () {
+  myservo.write(30);
+  delay(700);                           //wait for the servo to get there
+  rightdist = digitalRead(pingPin);
+  myservo.write(90);                                  
+  delay(700);                        //wait for the servo to get there
+  return;
+}
+
+void turnleft () {
+  digitalWrite(motorPin1,HIGH);       //use the combination which works for you
+  digitalWrite(motorPin2,LOW);      //right motor rotates forward and left motor backward
+  digitalWrite(motorPin3,LOW);
+  digitalWrite(motorPin4,HIGH);
+  delay(1000);                     // wait for the robot to make the turn
+  halt();
+  return;
+}
+
+void turnright () {
+  digitalWrite(motorPin1,LOW);       //use the combination which works for you
+  digitalWrite(motorPin2,HIGH);    //left motor rotates forward and right motor backward
+  digitalWrite(motorPin3,HIGH);
+  digitalWrite(motorPin4,LOW);
+  delay(1000);                              // wait for the robot to make the turn
+  halt();
+  return;
+}
+void calc_distance()
+{
+
+long duration, inches, cm;  //  function from datasheet of ping sensor
+  pinMode(pingPin,OUTPUT);    //  
+  digitalWrite(pingPin,LOW); 
+  delayMicroseconds(2);       // delay recomended from datasheet
+  digitalWrite(pingPin,HIGH); 
+  delayMicroseconds(5);       // delay recomended from datasheet
+  digitalWrite(pingPin,LOW); 
+  pinMode(pingPin,INPUT); 
+  duration =pulseIn(pingPin,HIGH); 
+  
+  inches = microsecondsToInches(duration); // converting time into distance
+  cm = microsecondsToCentimeters(duration); 
+  
+  Serial.print(inches); 
+  Serial.print("in, "); 
+  Serial.print(cm); 
+  Serial.print("cm"); 
+  Serial.println(); 
+  
+  delay(100);
+}
+
+long microsecondsToInches(long microseconds) 
+
+{ 
+  return microseconds / 74 / 2;  
+
+}
+
+long microsecondsToCentimeters(long microseconds)
+
+{
+ 
+  return microseconds / 29 / 2;
+}  
